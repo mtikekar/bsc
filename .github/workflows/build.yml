@@ -34,3 +34,32 @@ jobs:
         run: "make -j2"
       - name: Smoketest
         run: "make check"
+
+  build-macOS:
+    strategy:
+      matrix:
+        os: [ macos-10.15 ]
+    name: "Build: ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checkout submodules
+        shell: bash
+        run: |
+          auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+          git submodule sync --recursive
+          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+      - name: Install dependencies
+        shell: bash
+        run: ".github/workflows/install_dependencies_macos.sh"
+      - name: Build
+        shell: bash
+        run: |
+          PATH="/usr/local/opt/tcl-tk/bin:$PATH" PKG_CONFIG_PATH=/usr/local/opt/tcl-tk/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig make -j2
+      - name: Smoketest
+        run: "make check"
+      - name: Archive build artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: inst
+          path: inst
