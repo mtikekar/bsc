@@ -5943,7 +5943,30 @@ done
     PKG_CFLAGS="$PKG_CFLAGS "
 
 
-#TEA_ADD_STUB_SOURCES([itkStubLib.c])
+
+    vars="itkStubLib.c"
+    for i in $vars; do
+	# check for existence - allows for generic/win/unix VPATH
+	if test ! -f "${srcdir}/$i" -a ! -f "${srcdir}/generic/$i" \
+	    -a ! -f "${srcdir}/win/$i" -a ! -f "${srcdir}/unix/$i" \
+	    -a ! -f "${srcdir}/macosx/$i" \
+	    ; then
+	    as_fn_error $? "could not find stub source file '$i'" "$LINENO" 5
+	fi
+	PKG_STUB_SOURCES="$PKG_STUB_SOURCES $i"
+	# this assumes it is in a VPATH dir
+	i=`basename $i`
+	# handle user calling this before or after TEA_SETUP_COMPILER
+	if test x"${OBJEXT}" != x ; then
+	    j="`echo $i | sed -e 's/\.[^.]*$//'`.${OBJEXT}"
+	else
+	    j="`echo $i | sed -e 's/\.[^.]*$//'`.\${OBJEXT}"
+	fi
+	PKG_STUB_OBJECTS="$PKG_STUB_OBJECTS $j"
+    done
+
+
+
 
     vars="library/Archetype.itk
                 library/Toplevel.itk

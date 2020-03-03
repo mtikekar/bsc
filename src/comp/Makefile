@@ -53,6 +53,10 @@ TCL_VER   = $(shell echo 'puts [info tclversion]' | tclsh)
 ITCL_VER  = $(shell echo 'puts [package require Itcl]' | tclsh)
 TCL_HS    = ../vendor/htcl
 TCL_ARGS  = -L$(TCL_HS) $(shell pkg-config --silence-errors --cflags-only-I tcl tk || echo -I/usr/include/tcl)
+ifeq ($(OSTYPE), Darwin)
+TCL_LIBDIR = $(shell pkg-config --silence-errors --libs-only-L tcl)
+TCL_ARGS += $(TCL_LIBDIR) $(TCL_LIBDIR)/itcl$(ITCL_VER)
+endif
 TCL_LIBS  = -ltcl$(TCL_VER) -ltclstub$(TCL_VER) \
             -ltk$(TCL_VER) -ltkstub$(TCL_VER) \
             -litcl$(ITCL_VER) -litclstub$(ITCL_VER) -lhtcl
@@ -76,7 +80,11 @@ BSCBUILDLIBS = \
 
 EXTRAWISHLIBS = $(shell pkg-config --libs fontconfig xft)
 
+ifeq ($(OSTYPE), Darwin)
+WISHFLAGS = -L$(PREFIX)/lib/itk4.1.0 -litkstub4.1.0 -litk4.1.0
+else
 WISHFLAGS = -litkstub$(ITCL_VER) -litk$(ITCL_VER) $(shell pkg-config --libs x11)
+endif
 WISHFLAGS += $(EXTRAWISHLIBS)
 
 # -----
@@ -410,29 +418,30 @@ install-extra: $(UTILEXES) $(SHOWRULESEXES) install-util install-showrules
 
 # Until the need for BLUESPECDIR and LD_LIBRARY_PATH to be set is removed
 # put the binaries in a "core" subdirectory and a wrapper script in "bin"
-$(BINDIR)/core/%: %
-	mkdir -p -m 755 $(BINDIR)/core
-	$(INSTALL) -m 755 $(@F) $(BINDIR)/core/$(@F)
+COREBIN = $(PREFIX)/bscbin
+$(COREBIN)/%: %
+	mkdir -p -m 755 $(COREBIN)
+	$(INSTALL) -m 755 $(@F) $(COREBIN)/$(@F)
 
-$(BINDIR)/%: wrapper.sh $(BINDIR)/core/%
+$(BINDIR)/%: wrapper.sh $(COREBIN)/%
 	mkdir -p -m 755 $(BINDIR)
 	$(INSTALL) -m 755 wrapper.sh $(BINDIR)/$(@F)
 
 .PHONY: install-bsc
 install-bsc: $(addprefix $(BINDIR)/,$(BSCEXES))
-install-bsc: $(addprefix $(BINDIR)/core/,$(BSCEXES))
+install-bsc: $(addprefix $(COREBIN)/,$(BSCEXES))
 
 .PHONY: install-bluetcl
 install-bluetcl: $(addprefix $(BINDIR)/,$(TCLEXES))
-install-bluetcl: $(addprefix $(BINDIR)/core/,$(TCLEXES))
+install-bluetcl: $(addprefix $(COREBIN)/,$(TCLEXES))
 
 .PHONY: install-utils
 install-utils: $(addprefix $(BINDIR)/,$(UTILEXES))
-install-utils: $(addprefix $(BINDIR)/core/,$(UTILEXES))
+install-utils: $(addprefix $(COREBIN)/,$(UTILEXES))
 
 .PHONY: install-showrules
 install-showrules: $(addprefix $(BINDIR)/,$(SHOWRULESEXES))
-install-showrules: $(addprefix $(BINDIR)/core/,$(SHOWRULESEXES))
+install-showrules: $(addprefix $(COREBIN)/,$(SHOWRULESEXES))
 
 # ----
 # Other targets

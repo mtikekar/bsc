@@ -1,0 +1,33 @@
+# itk4.1.0 Makefile for MacOS only
+
+PWD:=$(shell pwd)
+TOP:=$(PWD)/../../..
+
+include $(TOP)/platform.mk
+
+.PHONY: all install clean full_clean
+
+ifeq ($(OSTYPE), Darwin)
+
+PREFIX?=$(TOP)/inst
+TCL_DIR=$(shell pkg-config --variable=libdir tcl)
+ITCL_VER=$(shell echo 'puts [package require Itcl]' | tclsh)
+
+all: install
+
+Makefile:
+	./configure --prefix=$(PREFIX) --exec-prefix=$(PREFIX) \
+		--with-tcl=$(TCL_DIR) --with-tk=$(TCL_DIR) --with-itcl=$(TCL_DIR)/itcl$(ITCL_VER)
+
+libitk4.1.0.dylib libitkstub4.1.0.a: Makefile
+	$(MAKE) -f Makefile  $@
+
+install: libitk4.1.0.dylib libitkstub4.1.0.a
+	 $(MAKE) -f Makefile install-lib-binaries
+
+clean full_clean:
+	if test -f Makefile; then $(MAKE) -f Makefile clean; fi
+	-rm -f config.log config.status  pkgIndex.tcl itkConfig.sh
+	-rm -f Makefile
+
+endif
