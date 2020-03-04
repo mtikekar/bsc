@@ -55,11 +55,11 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          PATH="/usr/local/opt/tcl-tk/bin:$PATH" PKG_CONFIG_PATH=/usr/local/opt/tcl-tk/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig make -j2
+          PATH="/usr/local/opt/tcl-tk/bin:$PATH" PKG_CONFIG_PATH=/usr/local/opt/tcl-tk/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig MACOSX_DEPLOYMENT_TARGET=10.13 make -j2
       - name: Smoketest
         run: "make check"
       - name: Archive build artifact
         uses: actions/upload-artifact@v1
         with:
-          name: inst
+          name: inst-macos
           path: inst
